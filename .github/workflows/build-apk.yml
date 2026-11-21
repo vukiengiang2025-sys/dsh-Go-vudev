@@ -1,0 +1,34 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up toolchain, runtime, and build APK
+        run: |
+          bash tooling/setup-toolchain.sh
+          source tooling/env.sh
+          flutter --version
+          java -version
+          bash runtime/build-runtime.sh arm64-v8a
+          DSH_BETA_TOKEN_FILE= bash tooling/build-apk.sh -f arm64 --keep-daemon
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-go-arm64-apk
+          path: |
+            **/*.apk
+            !**/intermediates/**
+          if-no-files-found: error
